@@ -89,6 +89,7 @@ class AuthController {
       if (!emailVerification) {
         if (!existingUser.isVerified) {
           // console.log(existingUser);
+          await emailVerifyModel.deleteMany({ userId: existingUser._id });
           await sendEmailVerificationOTP(existingUser);
           return res.status(400).json({
             status: false,
@@ -105,6 +106,7 @@ class AuthController {
       if (currentTime > expirationTime) {
         // OTP expired, send new OTP
         await sendEmailVerificationOTP(req, existingUser);
+        
         return res.status(400).json({
           status: "failed",
           message: "OTP expired, new OTP sent to your email",
@@ -186,7 +188,7 @@ class AuthController {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
         expiresIn: "1h",
       });
       const link = `${process.env.LOCAL_PORT_URL}/reset-password/${token}`;
@@ -269,7 +271,9 @@ class AuthController {
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
+      
       const user = await userModel.findOne({ _id: decoded.userId });
+   
       
       if (!user) {
         return res.status(404).json({ message: "User not found" });

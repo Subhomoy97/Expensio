@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 
 const AuthCheck = async (req, res, next) => {
   const token =
-    req.body.token || req.query.token || req.headers["x-access-token"];
+  req.body?.token || req.query?.token || req.headers?.["x-access-token"] || req.headers?.authorization;
 
   if (!token) {
     return res.status(401).json({
@@ -17,7 +17,9 @@ const AuthCheck = async (req, res, next) => {
     next();
   } catch (err) {
     if (err.name === "TokenExpiredError") {
-      return res.status(401).json({ message: "Token has expired. Please login again." });
+      return res
+        .status(401)
+        .json({ message: "Token has expired. Please login again." });
     }
     return res.status(403).json({ message: "Invalid token. Access denied." });
   }
