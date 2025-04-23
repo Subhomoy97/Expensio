@@ -1,3 +1,8 @@
+# 🚀 Node.js Express Authentication API
+
+A lightweight Express.js API for user authentication and profile handling, using MongoDB for data persistence.
+
+---
 
 ## 🔧 Features
 
@@ -6,26 +11,15 @@
 - 🌐 MongoDB connection
 - 📦 JSON & URL-encoded body parsing
 
+---
+
 ## ⚙️ Setup
 
-1. **Clone repo**
+1. **Clone the repository**
    ```bash
    git clone https://github.com/your-username/your-repo-name.git
    cd your-repo-name
- 2.  **Install dependencies**
-   ```bash
-   npm install
+2.**Install dependencies**
+```bash
+  npm install
 
-
-📦 Tech Stack
-Node.js
-
-Express
-
-MongoDB
-
-dotenv
-
-Mongoose (assumed)
-
-Nodemon (for dev)
