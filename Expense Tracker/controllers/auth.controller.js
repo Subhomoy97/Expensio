@@ -2,6 +2,7 @@ const userModel = require("../models/user.model");
 const emailVerifyModel = require("../models/otp.model");
 const sendEmailVerificationOTP = require("../helper/emailOtpVerify");
 const sendWelcomeEmail = require("../helper/sendWelcomeEmail");
+const resendOtpHelper=require('../helper/resendotp')
 const transporter=require('../config/email.config')
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -63,64 +64,61 @@ class AuthController {
     try {
       const { email, otp } = req.body;
       if (!email || !otp) {
-        return res
-          .status(400)
-          .json({ status: false, message: "All fields are required" });
+        return res.status(400).json({
+          status: false,
+          message: "All fields are required",
+        });
       }
+  
       const existingUser = await userModel.findOne({ email });
-
       if (!existingUser) {
         return res.status(404).json({
           status: false,
-          message: "Email doesn't exists",
+          message: "Email doesn't exist",
         });
       }
+  
       if (existingUser.isVerified) {
         return res.status(400).json({
           status: false,
           message: "Email is already verified",
         });
       }
-
+  
       const emailVerification = await emailVerifyModel.findOne({
         userId: existingUser._id,
         otp,
       });
+  
       if (!emailVerification) {
-        if (!existingUser.isVerified) {
-          // console.log(existingUser);
-          await emailVerifyModel.deleteMany({ userId: existingUser._id });
-          await sendEmailVerificationOTP(existingUser);
-          return res.status(400).json({
-            status: false,
-            message: "Invalid OTP, new OTP sent to your email",
-          });
-        }
-        return res.status(400).json({ status: false, message: "Invalid OTP" });
+        return res.status(400).json({
+          status: false,
+          message: "Invalid OTP",
+        });
       }
+  
       const currentTime = new Date();
-      // 15 * 60 * 1000 calculates the expiration period in milliseconds(15 minutes).
       const expirationTime = new Date(
         emailVerification.createdAt.getTime() + 15 * 60 * 1000
       );
+  
       if (currentTime > expirationTime) {
-        // OTP expired, send new OTP
-        await sendEmailVerificationOTP(req, existingUser);
-        
         return res.status(400).json({
-          status: "failed",
-          message: "OTP expired, new OTP sent to your email",
+          status: false,
+          message: "OTP expired. Please request a new one.",
         });
       }
-      // OTP is valid and not expired, mark email as verified
+  
+      // OTP is valid and not expired
       existingUser.isVerified = true;
       await existingUser.save();
       await sendWelcomeEmail(existingUser);
-      // Delete email verification document
       await emailVerifyModel.deleteMany({ userId: existingUser._id });
-      return res
-        .status(200)
-        .json({ status: true, message: "Email verified successfully" });
+  
+      return res.status(200).json({
+        status: true,
+        message: "Email verified successfully",
+      });
     } catch (error) {
       console.error(error);
       res.status(500).json({
@@ -129,6 +127,46 @@ class AuthController {
       });
     }
   }
+  // controllers/authController.js
+   async resendOtp (req, res)  {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({
+        status: false,
+        message: "Email is required",
+      });
+    }
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: "Email doesn't exist",
+      });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({
+        status: false,
+        message: "Email is already verified",
+      });
+    }
+
+    await resendOtpHelper(user);
+    return res.status(200).json({
+      status: true,
+      message: "OTP sent successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      status: false,
+      message: "Failed to resend OTP, please try again later",
+    });
+  }
+};
+
 
   async loginUser(req, res) {
     try {

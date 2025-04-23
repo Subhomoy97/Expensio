@@ -4,7 +4,7 @@ const fs = require("fs");
 
 class ProfileUploader {
   constructor({
-    folderName = "uploads",
+    folderName = "uploads/profile_Pic",
     supportedFiles = ["image/jpeg", "image/png", "image/jpg"],
     fieldSize = 1024 * 1024 * 2,
   }) {
