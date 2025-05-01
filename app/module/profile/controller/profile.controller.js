@@ -1,4 +1,5 @@
 const deleteFile = require('../../../helper/deleteFile');
+
 const profileRepositories = require('../repositories/profile.repositories');
 
 class ProfileController {
@@ -41,7 +42,7 @@ class ProfileController {
         fullname: fullName,
         address,
         phone,
-      });
+      })
 
       return res.status(201).json({ message: "Profile created successfully", profile: newProfile });
 
@@ -50,6 +51,29 @@ class ProfileController {
       console.error("CreateProfile Error:", err.message);
       if (profilePic) deleteFile("uploads/profile", profilePic);
       return res.status(500).json({ message: "Server error" });
+    }
+  }
+
+  async showProfile(req,res){
+    try {
+      
+     
+      
+      const userId = req.user._id; 
+
+      const profile = await profileRepositories.findProfileByUserId(userId)
+  
+  
+      if(profile){
+        return res.status(200).json({
+          success:true,
+          profile
+        })
+      }
+    
+      
+    } catch (error) {
+      console.log("Something Went Wrong",error)
     }
   }
 

@@ -9,8 +9,9 @@ const profileUpload = new profileUploader({
     folderName: "uploads/profile",
     supportedFiles: ["image/png", "image/jpg", "image/jpeg"],
     fieldSize: 1024 * 1024 * 5,
-});
-
+  });
+  
+  router.get('/',authCheck.authenticateAPI,profileController.showProfile)
 // Create Profile Route
 router.post(
   "/create",
@@ -28,5 +29,6 @@ router.post(
   validate(updateProfileSchema),  // 🔥 Validate update request
   profileController.updateProfile
 );
+
 
 module.exports = router;

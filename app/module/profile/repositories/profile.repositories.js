@@ -12,6 +12,9 @@ class ProfileRepositories {
         return await profileModel.findOne({ userId });
     }
 
+    findProfileById = async (id) => {
+        return await profileModel.findOne({ _id: id });
+    };
     // Create New Profile
     async createProfile(profileData) {
         return await profileModel.create(profileData);

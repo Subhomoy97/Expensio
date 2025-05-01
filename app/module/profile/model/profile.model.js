@@ -14,7 +14,8 @@ const profileSchema=new mongoose.Schema({
         match: /^[0-9]{10}$/, 
       },
       address:{type:String,required:true},
-       profilePic:{type:String,required:true}
+       profilePic:{type:String,required:true},
+      
 
 },{versionKey:false,timestamps:true})
 
