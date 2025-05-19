@@ -7,8 +7,8 @@ let transporter = nodemailer.createTransport({
     port: process.env.EMAIL_PORT || 587,
     secure: false, // true for 465, false for other ports
     auth: {
-      user: process.env.EMAIL_USER || 'uspapai7@gmail.com', // Admin Gmail ID
-      pass: process.env.EMAIL_PASS || 'hzdh avpj aioj fbhr', // Admin Gmail Password
+      user: process.env.EMAIL_USER || 'expensioweb@gmail.com', 
+      pass: process.env.EMAIL_PASS || 'akml tvun yslo ceoe', 
     },
   })
   

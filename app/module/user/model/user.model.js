@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true, minlength: 8 },
 
     isVerified: { type: Boolean, default: false },
+    isProfileCreated: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true, versionKey: false }

@@ -7,6 +7,7 @@ const cors = require("cors");
 dotenv.config();
 
 const deleteOldUnverifiedUsers = require("./app/helper/backgroundCleanUp"); // Adjust path
+const path = require("path");
 
 const app = express();
 // Schedule: Run cleanup every day at 2:00 AM
@@ -32,6 +33,7 @@ const getHost = appConfig.appRoot.host; // get host
 const isProduction = appConfig.appRoot.isProd;
 const getApiFolderName = appConfig.appRoot.getApiFolderName;
 const getUserFolderName = appConfig.appRoot.getUserFolderName;
+const getAuthFolderName = appConfig.appRoot.getAuthFolderName;
 
 // Global function to generate URLs for named routes
 global.generateUrl = generateUrl = (routeName, routeParams = {}) => {
@@ -51,7 +53,7 @@ app.use(
 
 app.use(morgan("dev"));
 app.use(express.static("uploads"));
-app.use("/uploads", express.static(__dirname + "uploads"));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Error handling function for the server
 const onError = (error) => {
@@ -97,13 +99,21 @@ const onError = (error) => {
     await require(resolve(join(__dirname, "app/config", "db")))();
 
     /*********************** Connect Routes **********************/
+    // -------auth folder route-------
+
+    const authFiles = await utils._readdir(`./app/router/${getAuthFolderName}`);
+
+    authFiles.forEach((file) => {
+      if (!file || file[0] == ".") return;
+      namedRouter.use("/auth", require(join(__dirname, file)));
+    });
     // -------api folder route-------
 
     const apiFiles = await utils._readdir(`./app/router/${getApiFolderName}`);
 
     apiFiles.forEach((file) => {
       if (!file || file[0] == ".") return;
-      namedRouter.use("/profile", require(join(__dirname, file)));
+      namedRouter.use("/api", require(join(__dirname, file)));
     });
 
     // -------user folder route-------
@@ -112,7 +122,7 @@ const onError = (error) => {
 
     userFiles.forEach((file) => {
       if (!file || file[0] == ".") return;
-      namedRouter.use("/", require(join(__dirname, file)));
+      namedRouter.use("/user", require(join(__dirname, file)));
     });
 
     // Building the Route Tables for debugging

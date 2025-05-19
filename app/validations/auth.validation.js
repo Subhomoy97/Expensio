@@ -1,5 +1,5 @@
 const Joi = require("joi");
-
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
 class JoiValidator {
   registerValidation = Joi.object({
     firstName: Joi.string().required().messages({
@@ -11,14 +11,20 @@ class JoiValidator {
       "string.base": "Last name must be text",
       "any.required": "Last name is required",
     }),
-    email: Joi.string().email().required().messages({
-      "string.email": "Please provide a valid email address",
-      "any.required": "Email is required",
-    }),
-    password: Joi.string().min(8).required().messages({
-      "string.min": "Password must be at least 8 characters",
-      "any.required": "Password is required",
-    }),
+    email: Joi.string()
+        .email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } })
+        .required()
+        .messages({
+            'string.email': 'Email must be a valid email address.',
+            'any.required': 'Email is required.'
+        }), 
+      password: Joi.string()
+        .pattern(passwordRegex)
+        .message('Password must be at least 8 characters long and include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.')
+        .required()
+        .messages({
+            'any.required': 'Password is required.'
+        }),
     confirmPassword: Joi.string()
       .valid(Joi.ref("password"))
       .required()

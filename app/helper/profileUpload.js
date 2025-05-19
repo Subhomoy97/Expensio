@@ -1,70 +1,29 @@
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 
-class ProfileUploader {
-  constructor({
-    folderName = "uploads/profile",
-    supportedFiles = ["image/jpeg", "image/png", "image/jpg"],
-    fieldSize = 1024 * 1024 * 2,
-  }) {
-    this.folderName = folderName;
-    this.supportedFiles = supportedFiles;
-    this.fieldSize = fieldSize;
+const FILE_TYPE_MAP = {
+    'image/png': 'png',
+    'image/jpeg': 'jpeg',
+    'image/jpg': 'jpg',
 
-    // Check if the folder exists, if not, create it
-    if (!fs.existsSync(this.folderName)) {
-      fs.mkdirSync(this.folderName, { recursive: true }); // recursive: true ensures that any missing parent directories are created as well
+};
+const storage=multer.diskStorage({
+    destination:function(req,file,cb){
+       const isValid=FILE_TYPE_MAP[file.mimetype];
+       let uploadError=new Error('invalid image type');
+       if(isValid){
+           uploadError=null;
+       }
+       cb(uploadError,'uploads/profile')
+    },
+    filename:function(req,file,cb){
+        const fileName=file.originalname.split(' ').join('-');
+        const extension=FILE_TYPE_MAP[file.mimetype];
+        cb(null,`${fileName}-${Date.now()}.${extension}`)
     }
-  }
+})
 
-  // Set up storage configuration
-  storage() {
-    return multer.diskStorage({
-      destination: (req, file, cb) => {
-        
-        cb(null, this.folderName);
-      },
-      filename: (req, file, cb) => {
-        let ext = path.extname(file.originalname); //to find the extension of a file
-        cb(null, Date.now() + "AM" + ext); //unique name creation
-      },
-    });
-  }
+const userImageUpload = multer({ storage: storage });
 
-  // Set up file filter to only accept the supported file types
-  fileFilter() {
-    return (req, file, callback) => {
-      if (this.supportedFiles.includes(file.mimetype)) {
-        callback(null, true);
-      } else {
-        console.log(
-          `Please select a valid file format. Supported formats are: ${this.supportedFiles.join(
-            ", "
-          )}`
-        );
-        callback(null, false);
-      }
-    };
-  }
-
-  // Return the multer configuration with dynamic options
-  upload() {
-    return multer({
-      storage: this.storage(),
-      fileFilter: this.fileFilter(),
-      limits: {
-        fileSize: this.fieldSize, // Limits the file size
-      },
-    });
-  }
-}
-
-module.exports = ProfileUploader; // Export the class itself
-
-
-
-
-
-
-
+module.exports = userImageUpload;

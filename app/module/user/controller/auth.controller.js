@@ -154,7 +154,7 @@ class AuthController {
       const token = jwt.sign(
         { userId: user._id },
         process.env.JWT_SECRET,
-        { expiresIn: "1h" }
+        { expiresIn: "24h" }
       );
 
       res.status(200).json({
@@ -166,6 +166,7 @@ class AuthController {
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
+          isProfileCreated:user.isProfileCreated
         },
       });
     } catch (error) {
@@ -178,6 +179,8 @@ class AuthController {
     try {
       const { email } = req.body;
       const user = await authRepository.findUserByEmail(email);
+      console.log(user);
+      
       if (!user) return res.status(404).json({ message: "User not found" });
 
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
@@ -187,17 +190,17 @@ class AuthController {
       await transporter.sendMail({
         to: email,
         subject: "Password Reset",
-        html: `<p>Hello ${user.name},</p>
+        html: `<p>Hello ${user.firstName},</p>
                 <p>Click the link below to reset your password:</p>
                 <a href="${link}" style="display: inline-block; padding: 10px 20px; background-color: #007BFF; color: #fff; text-decoration: none; border-radius: 5px;">Reset Password</a>
                 <p>This link will expire in 1 hour.</p>
                 <p>If you did not request a password reset, please ignore this email.</p>
                 <p>Thank you!</p>
                 <p>Best regards,</p>
-                <p>Team XYZ</p>
+                <p>Team Expensio</p>
                 <p><small>This is an automatically generated email. Please do not reply to this email.</small></p>
-                <p><small>© 2025 Team Papai. All rights reserved.</small></p>
-                <p><small>Powered by Papai</small></p>
+                <p><small>© 2025 Team Expensio. All rights reserved.</small></p>
+                <p><small>Powered by Subhomoy</small></p>
                 <p><small>Version 1.0</small></p>`,
       });
 
@@ -212,7 +215,7 @@ class AuthController {
  
 async updatePassword(req, res) {
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     const { currentPassword, newPassword,confirmNewPassword } = req.body;
 
   

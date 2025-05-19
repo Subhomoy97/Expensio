@@ -1,4 +1,5 @@
 const deleteFile = require('../../../helper/deleteFile');
+const userModel=require('../../user/model/user.model')
 
 const profileRepositories = require('../repositories/profile.repositories');
 
@@ -43,6 +44,9 @@ class ProfileController {
         address,
         phone,
       })
+      if(newProfile){
+        await userModel.findByIdAndUpdate({_id:userId},{isProfileCreated:true})
+      }
 
       return res.status(201).json({ message: "Profile created successfully", profile: newProfile });
 
@@ -56,18 +60,26 @@ class ProfileController {
 
   async showProfile(req,res){
     try {
-      
-     
-      
       const userId = req.user._id; 
-
+      const email = req.user.email
       const profile = await profileRepositories.findProfileByUserId(userId)
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+      if (!profile) {
+        return res.status(404).json({success:false, message: "Profile not found" });
+      }
   
-  
+  console.log(baseUrl,"333")
       if(profile){
         return res.status(200).json({
           success:true,
-          profile
+          profile: {
+            ...profile.toObject(),
+            email,
+            profilePic: profile.profilePic 
+              ? `${baseUrl}/uploads/profile/${profile.profilePic}` 
+              : null
+          }
         })
       }
     
@@ -80,62 +92,74 @@ class ProfileController {
   async updateProfile(req, res) {
     try {
       const userId = req.user?._id;
-      const profilePic = req.file?.filename;
-      
+      const uploadedPic = req.file?.filename;
+  
       if (!userId) {
-        if (profilePic) deleteFile("uploads/profile", profilePic);
+        if (uploadedPic) deleteFile("uploads/user", uploadedPic);
         return res.status(401).json({ message: "Unauthorized" });
       }
-
+  
       const existingProfile = await profileRepositories.findProfileByUserId(userId);
       if (!existingProfile) {
+        if (uploadedPic) deleteFile("uploads/user", uploadedPic);
         return res.status(404).json({ message: "Profile not found" });
       }
-
+  
       const { firstName, lastName, address, phone } = req.body;
-
-      // Validate phone number format if provided
+  
       if (phone && !/^\d{10}$/.test(phone)) {
+        if (uploadedPic) deleteFile("uploads/user", uploadedPic);
         return res.status(400).json({ message: "Phone must be exactly 10 digits" });
       }
-
+  
       let newProfilePic = existingProfile.profilePic;
-
-      // Handle profile picture update
-      if (req.file?.filename) {
-        if (profilePic) deleteFile("uploads/profile", profilePic);
-        newProfilePic = req.file.filename;
+  
+      // Replace profile picture if new one uploaded
+      if (uploadedPic) {
+        if (existingProfile.profilePic) {
+          deleteFile("uploads/user", existingProfile.profilePic); // delete old pic
+        }
+        newProfilePic = uploadedPic;
       }
-
+  
       let newFullName = existingProfile.fullname;
-
-      // Update user's first and last name if provided
+  
+      // Update user name if provided
       if (firstName || lastName) {
         const user = await profileRepositories.findUser(userId);
         if (!user) {
           return res.status(404).json({ message: "User not found" });
         }
-
+  
         const updatedFirstName = firstName || user.firstName;
         const updatedLastName = lastName || user.lastName;
         newFullName = `${updatedFirstName} ${updatedLastName}`;
-
+  
         await profileRepositories.updateUserName(userId, updatedFirstName, updatedLastName);
       }
-
+  
       const updatedProfile = await profileRepositories.updateProfileByUserId(userId, {
-        profilePic,
+        profilePic: newProfilePic,
         address,
         phone,
         fullname: newFullName,
       });
-
-      return res.status(200).json({ message: "Profile updated successfully", profile: updatedProfile });
-
+  
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const formattedProfile = {
+        ...updatedProfile.toObject(),
+        profilePic: newProfilePic ? `${baseUrl}/uploads/user/${newProfilePic}` : null,
+      };
+  
+      return res.status(200).json({
+        message: "Profile updated successfully",
+        profile: formattedProfile,
+      });
+  
     } catch (err) {
-        const profilePic = req.file?.filename;
+      const uploadedPic = req.file?.filename;
       console.error("UpdateProfile Error:", err.message);
-      if (profilePic) deleteFile("uploads/profile", profilePic);
+      if (uploadedPic) deleteFile("uploads/user", uploadedPic);
       return res.status(500).json({ message: "Server error" });
     }
   }

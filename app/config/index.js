@@ -1,3 +1,5 @@
+const { get } = require("mongoose");
+
 module.exports = {
     // Define application configuration
     appRoot: {
@@ -8,5 +10,6 @@ module.exports = {
         appName: process.env.APP_NAME || "Expension",
         getApiFolderName: process.env.API_FOLDER_NAME || "api",
         getUserFolderName: process.env.USER_FOLDER_NAME || "user",
+        getAuthFolderName: process.env.AUTH_FOLDER_NAME || "auth",
     },
 };
