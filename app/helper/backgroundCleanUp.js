@@ -1,4 +1,4 @@
-const userModel = require('../module/profile/model/profile.model'); // Correct path to your userModel
+const userModel = require('../module/user/model/user.model'); // Correct path to your userModel
 
 const deleteOldUnverifiedUsers = async () => {
   const expirationTime = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
