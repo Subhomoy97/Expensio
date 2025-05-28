@@ -10,15 +10,15 @@ class AuthController {
     try {
       const { firstName, lastName, password, email } =
         req.body;
-    
 
-     
+
+
       const existingUser = await authRepository.findUserByEmail(email);
 
       if (existingUser) {
         if (existingUser.isVerified) {
           return res.status(400).json({
-            success:false,
+            success: false,
             message: "Email already exists",
           });
         } else {
@@ -54,8 +54,8 @@ class AuthController {
   async verifyOtp(req, res) {
     try {
       const { email, otp } = req.body;
-    
-  
+
+
       const user = await authRepository.findUserByEmail(email);
       if (!user) {
         return res.status(404).json({ status: false, message: "Email not registered" });
@@ -66,10 +66,10 @@ class AuthController {
 
       const otpRecord = await authRepository.findOtpRecord(user._id, otp);
       if (!otpRecord) {
-        
+
         return res.status(400).json({ status: false, message: "Invalid OTP" });
       }
-      
+
       const isExpired =
         new Date() > new Date(otpRecord.createdAt.getTime() + 15 * 60 * 1000);
       if (isExpired) {
@@ -98,7 +98,7 @@ class AuthController {
     try {
       const { email } = req.body;
 
-     
+
 
       const user = await authRepository.findUserByEmail(email);
 
@@ -136,7 +136,7 @@ class AuthController {
   async loginUser(req, res) {
     try {
       const { email, password } = req.body;
-     
+
 
       const user = await authRepository.findUserByEmail(email);
       if (!user || !user.isVerified)
@@ -144,7 +144,11 @@ class AuthController {
           success: false,
           message: "Invalid credentials or not verified",
         });
-
+      if (user.isDeleted)
+        return res.status(401).json({
+          success: false,
+          message: "User is deactivated. Contact admin",
+        });
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch)
         return res
@@ -166,7 +170,8 @@ class AuthController {
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
-          isProfileCreated:user.isProfileCreated
+          isProfileCreated: user.isProfileCreated,
+          isAdmin: user.isAdmin
         },
       });
     } catch (error) {
@@ -180,7 +185,7 @@ class AuthController {
       const { email } = req.body;
       const user = await authRepository.findUserByEmail(email);
       console.log(user);
-      
+
       if (!user) return res.status(404).json({ message: "User not found" });
 
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
@@ -189,20 +194,33 @@ class AuthController {
       const link = `${process.env.LOCAL_PORT_URL}/reset-password/${token}`;
       await transporter.sendMail({
         to: email,
-        subject: "Password Reset",
-        html: `<p>Hello ${user.firstName},</p>
-                <p>Click the link below to reset your password:</p>
-                <a href="${link}" style="display: inline-block; padding: 10px 20px; background-color: #007BFF; color: #fff; text-decoration: none; border-radius: 5px;">Reset Password</a>
-                <p>This link will expire in 1 hour.</p>
-                <p>If you did not request a password reset, please ignore this email.</p>
-                <p>Thank you!</p>
-                <p>Best regards,</p>
-                <p>Team Expensio</p>
-                <p><small>This is an automatically generated email. Please do not reply to this email.</small></p>
-                <p><small>© 2025 Team Expensio. All rights reserved.</small></p>
-                <p><small>Powered by Subhomoy</small></p>
-                <p><small>Version 1.0</small></p>`,
+        subject: "🔒 Password Reset Request",
+        html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
+          <h2 style="color: #007BFF;">🔐 Reset Your Password</h2>
+          <p><strong>Hello ${user.firstName},</strong></p>
+
+          <p>We received a request to reset your password. Click the button below to proceed:</p>
+
+          <div style="text-align: center; margin: 20px 0;">
+            <a href="${link}" style="display: inline-block; padding: 12px 24px; background-color: #007BFF; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Reset Password
+            </a>
+          </div>
+
+          <p>This link is valid for <strong>1 hour</strong>. If you did not request a password reset, you can safely ignore this email.</p>
+
+          <p style="margin-top: 30px;">Thanks for using Expensio!</p>
+          <p>— Team Expensio</p>
+
+          <hr style="margin-top: 40px;">
+          <small style="color: #888;">This is an automatically generated email. Please do not reply.</small><br>
+          <small style="color: #888;">© 2025 Team Expensio. All rights reserved.</small><br>
+          <small style="color: #888;">Powered by Subhomoy • Version 1.0</small>
+        </div>
+        `,
       });
+
 
       return res.status(200).json({ message: "Email for Reset Password sent" });
     } catch (error) {
@@ -212,39 +230,39 @@ class AuthController {
     }
   }
 
- 
-async updatePassword(req, res) {
-  try {
-    const userId = req.user._id;
-    const { currentPassword, newPassword,confirmNewPassword } = req.body;
 
-  
+  async updatePassword(req, res) {
+    try {
+      const userId = req.user._id;
+      const { currentPassword, newPassword, confirmNewPassword } = req.body;
 
-    // Get user from DB
-    const user = await authRepository.findUserById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+
+
+      // Get user from DB
+      const user = await authRepository.findUserById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if old password matches
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+
+      // Hash new password
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update user password
+      await authRepository.updateUserPassword(userId, hashedNewPassword);
+
+      return res.status(200).json({ message: "Password updated successfully" });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Server error" });
     }
-
-    // Check if old password matches
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Current password is incorrect" });
-    }
-
-    // Hash new password
-    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-
-    // Update user password
-    await authRepository.updateUserPassword(userId, hashedNewPassword);
-
-    return res.status(200).json({ message: "Password updated successfully" });
-
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Server error" });
   }
-}
 
   async resetPassword(req, res) {
     try {

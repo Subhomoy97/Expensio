@@ -4,9 +4,14 @@ const morgan = require("morgan");
 const cron = require("node-cron");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const ejs=require('ejs')
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const methodOverride = require('method-override');
+const flash = require('connect-flash');
 dotenv.config();
 
-const deleteOldUnverifiedUsers = require("./app/helper/backgroundCleanUp"); // Adjust path
+const deleteOldUnverifiedUsers = require("./app/helper/backgroundCleanUp"); 
 const path = require("path");
 
 const app = express();
@@ -23,6 +28,32 @@ app.use(
     credentials: true,
   })
 );
+app.use(methodOverride('_method'));
+app.use(cookieParser());
+app.use(session({
+  cookie: {
+    httpOnly: true,
+    secure: false,
+    maxAge: 60000,
+  },
+  secret: process.env.JWT_SECRECT || "X7k9#Lz@W2",
+  resave: false,
+  saveUninitialized: true
+}));
+
+app.use(flash());
+
+app.use((req, res, next) => {
+    res.locals.successMessage = req.flash('success');
+    res.locals.errorMessage = req.flash('error');
+    next();
+});
+
+//templeteing engine ejs setup
+app.set('view engine','ejs');
+app.set('views','views')
+
+app.use(express.static(__dirname +'/public'))      
 /******************** Import Configuration and Custome Modules *******************/
 const appConfig = require(resolve(join(__dirname, "app/config", "index")));
 // Import Utils Module
@@ -34,6 +65,7 @@ const isProduction = appConfig.appRoot.isProd;
 const getApiFolderName = appConfig.appRoot.getApiFolderName;
 const getUserFolderName = appConfig.appRoot.getUserFolderName;
 const getAuthFolderName = appConfig.appRoot.getAuthFolderName;
+const getAdminFolderName = appConfig.appRoot.getAdminFolderName;
 
 // Global function to generate URLs for named routes
 global.generateUrl = generateUrl = (routeName, routeParams = {}) => {
@@ -123,6 +155,15 @@ const onError = (error) => {
     userFiles.forEach((file) => {
       if (!file || file[0] == ".") return;
       namedRouter.use("/user", require(join(__dirname, file)));
+    });
+
+    // -------admin folder route-------
+
+    const adminFiles = await utils._readdir(`./app/router/${getAdminFolderName}`);
+
+    adminFiles.forEach((file) => {
+      if (!file || file[0] == ".") return;
+      namedRouter.use("/admin", require(join(__dirname, file)));
     });
 
     // Building the Route Tables for debugging

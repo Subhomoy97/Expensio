@@ -9,7 +9,7 @@ class ReviewController {
         return res.status(400).json({ message: 'Rating and comment are required.' });
       }
 
-      const existingReview = await reviewRepository.findByUserId(req.user._id);
+      const existingReview = await reviewRepository.findByUserId(req.user._id, false);
       if (existingReview) {
         return res.status(400).json({ message: 'You have already submitted a review.', review: existingReview });
       }
@@ -48,7 +48,7 @@ class ReviewController {
 
   async getUserReview(req, res) {
     try {
-      const review = await reviewRepository.findByUserId(req.user._id);
+      const review = await reviewRepository.findByUserId(req.user._id, false); // only non-deleted
       if (!review) {
         return res.status(404).json({ message: 'No review found for this user' });
       }
@@ -61,7 +61,7 @@ class ReviewController {
 
   async getAllReviews(req, res) {
     try {
-      const reviews = await reviewRepository.findAllReviews();
+      const reviews = await reviewRepository.findAllReviews(false); // only non-deleted
       res.status(200).json(reviews);
     } catch (err) {
       res.status(500).json({ message: err.message });
@@ -70,12 +70,25 @@ class ReviewController {
 
   async deleteReview(req, res) {
     try {
-      const review = await reviewRepository.findReviewByIdAndUserId(req.params.id, req.user._id);
+      const review = await reviewRepository.softDeleteById(req.params.id, req.user._id);
       if (!review) {
-        return res.status(404).json({ message: 'Review not found' });
+        return res.status(404).json({ message: 'Review not found or already deleted' });
       }
 
       res.status(200).json({ message: 'Review deleted successfully' });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+
+  async restoreReview(req, res) {
+    try {
+      const review = await reviewRepository.restoreById(req.params.id, req.user._id);
+      if (!review) {
+        return res.status(404).json({ message: 'Review not found or not deleted' });
+      }
+
+      res.status(200).json({ message: 'Review restored successfully' });
     } catch (err) {
       res.status(500).json({ message: err.message });
     }

@@ -11,5 +11,6 @@ module.exports = {
         getApiFolderName: process.env.API_FOLDER_NAME || "api",
         getUserFolderName: process.env.USER_FOLDER_NAME || "user",
         getAuthFolderName: process.env.AUTH_FOLDER_NAME || "auth",
+        getAdminFolderName: process.env.ADMIN_FOLDER_NAME || "admin",
     },
 };

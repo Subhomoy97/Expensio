@@ -1,8 +1,10 @@
 const reviewModel = require('../model/review.model');
 
 class ReviewRepository {
-  async findByUserId(userId) {
-    return await reviewModel.findOne({ userId });
+  async findByUserId(userId, includeDeleted = false) {
+    const query = { userId };
+    if (!includeDeleted) query.isDeleted = false;
+    return await reviewModel.findOne(query);
   }
 
   async createReview(data) {
@@ -12,18 +14,35 @@ class ReviewRepository {
 
   async updateReviewByUserId(userId, data) {
     return await reviewModel.findOneAndUpdate(
-      { userId },
+      { userId, isDeleted: false },
       data,
       { new: true, runValidators: true }
     );
   }
 
-  async findAllReviews() {
-    return await reviewModel.find().sort({ createdAt: -1 });
+  async findAllReviews(includeDeleted = false) {
+    const filter = includeDeleted ? {} : { isDeleted: false };
+    return await reviewModel.find(filter).sort({ createdAt: -1 });
+  }
+
+  async softDeleteById(id, userId) {
+    return await reviewModel.findOneAndUpdate(
+      { _id: id, userId, isDeleted: false },
+      { isDeleted: true },
+      { new: true }
+    );
+  }
+
+  async restoreById(id, userId) {
+    return await reviewModel.findOneAndUpdate(
+      { _id: id, userId, isDeleted: true },
+      { isDeleted: false },
+      { new: true }
+    );
   }
 
   async findReviewByIdAndUserId(id, userId) {
-    return await reviewModel.findOneAndDelete({ _id: id, userId });
+    return await reviewModel.findOne({ _id: id, userId, isDeleted: false });
   }
 }
 

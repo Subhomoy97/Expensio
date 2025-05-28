@@ -25,6 +25,7 @@ module.exports = () => {
             }
 
         ]).exec()
+        console.log(user, "user")
         if (user) {
             return done(null, user[0]);
         } else {

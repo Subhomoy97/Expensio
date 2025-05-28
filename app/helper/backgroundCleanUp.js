@@ -1,5 +1,3 @@
-// backgroundCleanup.js
-
 const userModel = require('../module/profile/model/profile.model'); // Correct path to your userModel
 
 const deleteOldUnverifiedUsers = async () => {
