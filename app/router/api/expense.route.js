@@ -6,5 +6,6 @@ router.post('/add-expense',authCheck.authenticateAPI,expenseController.addExpens
 router.get('/get-expenses',authCheck.authenticateAPI,expenseController.getExpenses)
 router.put('/update-expense/:id',authCheck.authenticateAPI,expenseController.updateExpense)
 router.delete('/delete-expense/:id',authCheck.authenticateAPI,expenseController.deleteExpense)
+router.put('/restore-expense/:id',authCheck.authenticateAPI,expenseController.restoreExpense)
 
 module.exports=router

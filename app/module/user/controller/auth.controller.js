@@ -10,9 +10,7 @@ class AuthController {
     try {
       const { firstName, lastName, password, email } =
         req.body;
-
-
-
+        
       const existingUser = await authRepository.findUserByEmail(email);
 
       if (existingUser) {

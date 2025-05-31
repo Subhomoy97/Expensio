@@ -34,8 +34,11 @@ class ExpenseRepository {
     return await Expense.findOneAndUpdate({ _id: id, userId }, data, { new: true });
   }
 
-  async deleteExpenseById(id, userId) {
-    return await Expense.findOneAndDelete({ _id: id, userId });
+  async softDeleteById(id, userId) {
+    return await Expense.findOneAndUpdate({ _id: id, userId }, { isDeleted: true }, { new: true });
+  }
+  async restoreById(id, userId) {
+    return await Expense.findOneAndUpdate({ _id: id, userId, isDeleted: true }, { isDeleted: false }, { new: true });
   }
 }
 
