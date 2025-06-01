@@ -11,14 +11,14 @@ const methodOverride = require('method-override');
 const flash = require('connect-flash');
 dotenv.config();
 
-const deleteOldUnverifiedUsers = require("./app/helper/backgroundCleanUp"); 
+const sendMailUnverifiedUsers = require("./app/helper/sendMailUnverifiedUser"); 
 const path = require("path");
 
 const app = express();
-// Schedule: Run cleanup every day at 2:00 AM
-cron.schedule("0 2 * * *", async () => {
-  console.log("Running scheduled unverified user cleanup...");
-  await deleteOldUnverifiedUsers();
+
+cron.schedule('0 */12 * * *', async () => {
+  console.log("⏱️ Running 12-hour reminder for unverified users...");
+  await sendMailUnverifiedUsers();
 });
 
 const namedRouter = require("route-label")(app);
