@@ -89,7 +89,7 @@ class ExpenseController {
         };
       }
 
-      const expenses = (await expenseRepository.getFilteredExpenses(filters)).sort((a, b) => b.date - a.date);
+      const expenses = await expenseRepository.getFilteredExpenses(filters);
       const total = expenses.reduce((acc, item) => acc + item.amount, 0);
 
       res.status(200).json({ expenses, totalExpense: total });

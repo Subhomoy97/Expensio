@@ -27,8 +27,11 @@ class ExpenseRepository {
   }
 
   async getFilteredExpenses(filters) {
-    return await Expense.find(filters).populate('categoryId');
-  }
+  return await Expense.find(filters)
+    .populate('categoryId')
+    .sort({ date: -1 }); 
+}
+
 
   async updateExpenseById(id, userId, data) {
     return await Expense.findOneAndUpdate({ _id: id, userId }, data, { new: true });
