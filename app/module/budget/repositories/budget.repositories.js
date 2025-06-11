@@ -155,6 +155,7 @@ class BudgetRepository {
                     { $lte: ["$date", "$$end"] },
                   ],
                 },
+                isDeleted: { $ne: true },
               },
             },
             {
