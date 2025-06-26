@@ -130,12 +130,12 @@
                         <% if (!user.isDeleted) { %>
                         <form action="/admin/delete-user/<%= user._id %>?_method=PUT" method="POST" class="swal-form delete-form d-inline">
                           <input type="hidden" name="_method" value="PUT">
-                          <button type="submit" class="btn btn-danger btn-sm">Disable</button>
+                          <button type="submit" class="btn btn-danger btn-sm">Deactivate</button>
                         </form>
                         <% } else { %>
                         <form action="/admin/restore-user/<%= user._id %>?_method=PUT" method="POST" class="swal-form restore-form d-inline">
                           <input type="hidden" name="_method" value="PUT">
-                          <button type="submit" class="btn btn-success btn-sm">Restore</button>
+                          <button type="submit" class="btn btn-success btn-sm">Activate</button>
                         </form>
                         <% } %>
                       </td>
